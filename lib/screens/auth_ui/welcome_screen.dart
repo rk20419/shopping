@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shopping_app/screens/auth_ui/signin_screen.dart';
 
+import '../../controllers/google_signin_controller.dart';
 import '../../utils/app_utils.dart';
 
-class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+class WelcomeScreen extends StatelessWidget {
+  WelcomeScreen({super.key});
 
-  @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
-}
+  //initialize Google controller
+  final GoogleSignInController _googleSignInController =
+      Get.put(GoogleSignInController());
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,7 +55,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: TextButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  _googleSignInController.signInWithGoogle();
+                },
                 icon: Image.asset(
                   'assets/images/google.png',
                   width: Get.width / 12,
@@ -76,12 +79,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: TextButton.icon(
-                onPressed: () {},
                 icon: const Icon(
                   Icons.email_rounded,
                   color: AppConstant.appTextColor,
                 ),
                 label: const Text("Sign in with email"),
+                onPressed: () {
+                  Get.to(() => const SigninScreen());
+                },
               ),
             ),
           ),
