@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shopping_app/screens/user_panel/all_orders_screen.dart';
 import 'package:shopping_app/utils/app_utils.dart';
 
 import '../screens/auth_ui/welcome_screen.dart';
@@ -87,22 +88,28 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(
+            Padding(
+              padding: const EdgeInsets.symmetric(
                 horizontal: 20.0,
               ),
               child: ListTile(
                 titleAlignment: ListTileTitleAlignment.center,
-                title: Text("Orders",
+                title: const Text("Orders",
                     style: TextStyle(color: AppConstant.appTextColor)),
-                leading: Icon(
+                leading: const Icon(
                   Icons.shopping_bag,
                   color: AppConstant.appTextColor,
                 ),
-                trailing: Icon(
+                trailing: const Icon(
                   Icons.arrow_forward,
                   color: AppConstant.appTextColor,
                 ),
+                onTap: () {
+                  //For close drawer
+                  Get.back();
+                  //Move to All orders page
+                  (Get.to(() => const AllOrdersScreen()));
+                },
               ),
             ),
             const Padding(

@@ -1,10 +1,19 @@
+// ignore: must_be_immutable
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shopping_app/models/product_model.dart';
-import 'package:shopping_app/utils/app_utils.dart';
+import 'package:shopping_app/screens/user_panel/cart_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../models/cart_models.dart';
+import '../../models/product_model.dart';
+import '../../utils/app_utils.dart';
 
 // ignore: must_be_immutable
 class ProductDetailsScreen extends StatefulWidget {
@@ -16,12 +25,24 @@ class ProductDetailsScreen extends StatefulWidget {
 }
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
+  User? user = FirebaseAuth.instance.currentUser;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: AppConstant.appTextColor),
         backgroundColor: AppConstant.appMainColor,
         title: const Text("Product Details"),
+        actions: [
+          GestureDetector(
+            onTap: () => Get.to(() => const CartScreen()),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(Icons.shopping_cart),
+            ),
+          )
+        ],
       ),
       body: Column(
         children: [
@@ -116,6 +137,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          // For whatsapp
                           Material(
                             child: Container(
                               width: Get.width / 3.0,
@@ -131,6 +153,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                       color: AppConstant.appTextColor),
                                 ),
                                 onPressed: () {
+                                  sendMessageOnWhatsApp(
+                                      productModel: widget.productModel);
+
                                   //Get.to(() => const SigninScreen());
                                 },
                               ),
@@ -139,6 +164,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           SizedBox(
                             width: Get.width / 5.0,
                           ),
+
+                          // Add Product to whatsapp
                           Material(
                             child: Container(
                               width: Get.width / 3.0,
@@ -153,8 +180,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   style: TextStyle(
                                       color: AppConstant.appTextColor),
                                 ),
-                                onPressed: () {
+                                onPressed: () async {
                                   //Get.to(() => const SigninScreen());
+                                  await checkProductExistence(uId: user!.uid);
                                 },
                               ),
                             ),
@@ -168,5 +196,83 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         ],
       ),
     );
+  }
+
+  // Whatsapp
+  static Future<void> sendMessageOnWhatsApp({
+    required ProductModel productModel,
+  }) async {
+    const number = "++917290908661";
+    final message =
+        "Hello Techi4u \n i want to know about this product \n ${productModel.productName} \n ${productModel.productId}";
+
+    final url = 'https://wa.me/$number?text=${Uri.encodeComponent(message)}';
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  // check product exist or not
+  Future<void> checkProductExistence({
+    required String uId,
+    int quantityIncrement = 1,
+  }) async {
+    final DocumentReference documentReference = FirebaseFirestore.instance
+        .collection('cart')
+        .doc(uId)
+        .collection('cartOrders')
+        .doc(widget.productModel.productId.toString());
+
+    DocumentSnapshot snapshot = await documentReference.get();
+
+    if (snapshot.exists) {
+      //if product exists increase Product Quantuty and price
+      int currentQuantity = snapshot['productQuantity'];
+      int updatedQuantity = currentQuantity + quantityIncrement;
+      double totalPrice = double.parse(widget.productModel.isSale
+              ? widget.productModel.salePrice
+              : widget.productModel.fullPrice) *
+          updatedQuantity;
+
+      await documentReference.update({
+        'productQuantity': updatedQuantity,
+        'productTotalPrice': totalPrice
+      });
+
+      log('product product exists');
+    } else {
+      //Add Product in cart and add price
+      await FirebaseFirestore.instance.collection('cart').doc(uId).set(
+        {
+          'uId': uId,
+          'createdAt': DateTime.now(),
+        },
+      );
+
+      CartModel cartModel = CartModel(
+          productId: widget.productModel.productId,
+          categoryId: widget.productModel.categoryId,
+          productName: widget.productModel.productName,
+          categoryName: widget.productModel.categoryName,
+          salePrice: widget.productModel.salePrice,
+          fullPrice: widget.productModel.fullPrice,
+          productImages: widget.productModel.productImages,
+          deliveryTime: widget.productModel.deliveryTime,
+          isSale: widget.productModel.isSale,
+          productDescription: widget.productModel.productDescription,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          productQuantity: 1,
+          productTotalPrice: double.parse(widget.productModel.isSale
+              ? widget.productModel.salePrice
+              : widget.productModel.fullPrice));
+
+      await documentReference.set(cartModel.toMap());
+
+      log('product added');
+    }
   }
 }
