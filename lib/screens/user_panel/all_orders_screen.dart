@@ -8,6 +8,8 @@ import 'package:shopping_app/controllers/cart_price_controller.dart';
 import 'package:shopping_app/models/order_model.dart';
 import 'package:shopping_app/utils/app_utils.dart';
 
+import 'add_review_screen.dart';
+
 class AllOrdersScreen extends StatefulWidget {
   const AllOrdersScreen({super.key});
 
@@ -112,7 +114,12 @@ class _CartScreenState extends State<AllOrdersScreen> {
                     ),
                     trailing: orderModel.status == true
                         ? ElevatedButton(
-                            onPressed: () {}, child: const Text("Review"))
+                            onPressed: () {
+                              Get.to(() => AddReviewScreen(
+                                    orderModel: orderModel,
+                                  ));
+                            },
+                            child: const Text("Review"))
                         : const SizedBox.shrink(),
                   ),
                 );

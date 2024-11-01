@@ -8,7 +8,7 @@ import 'package:shopping_app/widgets/banner_widget.dart';
 import 'package:shopping_app/widgets/categories_widget.dart';
 import 'package:shopping_app/widgets/drawer_widget.dart';
 import 'package:shopping_app/widgets/flash_sale_widget.dart';
-import 'package:shopping_app/widgets/heading_widget%20.dart';
+import 'package:shopping_app/widgets/heading_widget.dart';
 import '../../utils/app_utils.dart';
 import 'all_flash_sale_products.dart';
 

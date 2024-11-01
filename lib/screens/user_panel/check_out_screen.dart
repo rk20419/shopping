@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_swipe_action_cell/core/cell.dart';
 import 'package:get/get.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shopping_app/controllers/cart_price_controller.dart';
 import 'package:shopping_app/controllers/get_customer_device_token.dart';
 
@@ -29,8 +30,18 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   TextEditingController nameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   TextEditingController addressController = TextEditingController();
+  String? customerToken;
+  String? name;
+  String? phone;
+  String? address;
+
+  final Razorpay _razorpay = Razorpay();
+
   @override
   Widget build(BuildContext context) {
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppConstant.appMainColor,
@@ -240,20 +251,25 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                   if (nameController.text != '' &&
                       phoneController.text != '' &&
                       addressController.text != '') {
-                    String name = nameController.text.trim();
-                    String phone = phoneController.text.trim();
-                    String address = addressController.text.trim();
-                    String customerToken = await getCustomerDeviceToken();
+                    name = nameController.text.trim();
+                    phone = phoneController.text.trim();
+                    address = addressController.text.trim();
+                    customerToken = await getCustomerDeviceToken();
 
+                    // RazorPay
+                    var options = {
+                      'key': 'rzp_test_YVX2oPMJcD3eym',
+                      'amount': 1000,
+                      'currency': 'INR',
+                      'name': 'Acme Corp.',
+                      'description': 'Fine T-Shirt',
+                      'prefill': {
+                        'contact': '8888888888',
+                        'email': 'test@razorpay.com'
+                      }
+                    };
+                    _razorpay.open(options);
                     //for placing order
-                    placeOrder(
-                      // ignore: use_build_context_synchronously
-                      context: context,
-                      customerName: name,
-                      customerPhone: phone,
-                      customerAddress: address,
-                      customerDeviceToken: customerToken,
-                    );
                   } else {
                     log('Please Fill All Details');
                   }
@@ -272,5 +288,32 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
       enableDrag: true,
       elevation: 6,
     );
+  }
+
+  //RazorPay
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    // Do something when payment succeeds
+    placeOrder(
+      // ignore: use_build_context_synchronously
+      context: context,
+      customerName: name!,
+      customerPhone: phone!,
+      customerAddress: address!,
+      customerDeviceToken: customerToken!,
+    );
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Do something when payment fails
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    // Do something when an external wallet was selected
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _razorpay.clear();
   }
 }
